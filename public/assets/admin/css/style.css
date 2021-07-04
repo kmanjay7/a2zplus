@@ -1,0 +1,8 @@
+#beneficiary-table tbody th,
+#beneficiary-table tbody td {
+    vertical-align: middle;
+}
+
+#beneficiary-table tbody td p {
+    line-height: 1em;
+}

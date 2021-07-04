@@ -22,6 +22,11 @@ require __DIR__.'/auth.php';
 Route::namespace('Admin')->middleware(['auth'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', 'CommonController@index')->name('index');
-        Route::get('/bank-list', 'DmtController@bankList')->name('bank-list');
+        Route::resource('money-transfer', 'MoneyTransferController');
+        Route::prefix('dmt')->name('dmt.')->group(function () {
+            Route::get('logout', 'MoneyTransferController@logout')->name('logout');
+            Route::post('verifyOtp', 'MoneyTransferController@verifyOtp')->name('verifyOtp');
+            Route::post('resendOtp', 'MoneyTransferController@resendOtp')->name('resendOtp');
+        });
     });
 });           
