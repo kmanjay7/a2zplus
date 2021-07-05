@@ -6,3 +6,8 @@
 #beneficiary-table tbody td p {
     line-height: 1em;
 }
+
+#fundTransfer button.accordion-button {
+    color: #393b46;
+    background-color: #fff;
+}

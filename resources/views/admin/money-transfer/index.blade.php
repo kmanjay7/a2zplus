@@ -24,6 +24,7 @@
                         <div class="mb-3 text-center">
                             <h4 class="h4 text-primary">Hi, {{ $sender->fullname }}</h4>
                             <h5 class="h5 text-success mt-3">{{ $sender->mobile }}</h5>
+                            <input type="hidden" name="sender_id" value="{{ $sender->id }}">
                             <a href="{{ route('admin.dmt.logout') }}" class="btn btn-primary btn-sm waves-effect waves-light w-75 mt-3">Log Out</a>
                         </div>
                     </div>
@@ -52,14 +53,11 @@
                     <div class="row">
                         <div class="col-md-5">
                             <div class="mb-3">
-                                <label class="form-label" for="bank_name">Bank Name</label>
-                                <select name="bank_name" id="bank_name" class="form-select" required>
+                                <label class="form-label" for="bank_id">Bank Name</label>
+                                <select name="bank_id" id="bank_id" class="form-select" required>
                                     <option value="">-- Select Bank Name --</option>
-                                    <option value="1" data-ifsc_code="SBIN0004659">SBI</option>
-                                    <option value="2" data-ifsc_code="PNB0004659">PNB</option>
-                                    <option value="3" data-ifsc_code="CB0004659">City Bank</option>
                                     @foreach ($banks as $bank)
-                                        <option value="{{ $bank->bankId }}" data-ifsc_code="{{ $bank->ifscCode }}">{{ $bank->bankName }}</option>
+                                        <option value="{{ $bank['id'] }}" data-ifsc_code="{{ $bank['ifsc'] }}">{{ $bank['name'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -73,7 +71,7 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label" for="account_number">Account Number</label>
-                                <input type="text" name="account_number" id="account_number" class="form-control" placeholder="Account Number" data-parsley-type="number" data-parsley-length="[9,18]" required />
+                                <input type="text" name="account_number" id="account_number" class="form-control" placeholder="Account Number" data-parsley-type="number" data-parsley-length="[8,25]" required />
                             </div>
                         </div>
                     </div>
@@ -94,11 +92,103 @@
                             <div class="mb-3" style="margin-top: 1.7rem;">
                                 @csrf
                                 @method('PUT')
+                                <input type="hidden" name="beneId" value="">
+                                <input type="hidden" name="clientId" value="">
+                                <input type="hidden" name="bank_name" value="">
                                 <button type="submit" class="btn btn-primary waves-effect waves-light w-100 beneficiary-btn">Add Beneficiary</button>
                             </div>
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="accordion accordion-flush" id="fundTransfer">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="flush-headingOne">
+                            <button type="button" class="accordion-button h5" data-bs-toggle="collapse" data-bs-target="#fund-accordion" aria-expanded="false" aria-controls="fund-accordion">Transfer Fund</button>
+                        </h2>
+                        <div id="fund-accordion" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#fundTransfer">
+                            <div class="accordion-body">
+                                <form method="post" action="{{ route('admin.dmt.transactionInit', $sender->id) }}" class="transfer-fund-form" novalidate>
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="bank_id">Bank Name</label>
+                                                <select name="bank_id" id="bank_id" class="form-select" disabled>
+                                                    <option value="">-- Select Bank Name --</option>
+                                                    @foreach ($banks as $bank)
+                                                        <option value="{{ $bank['id'] }}" data-ifsc_code="{{ $bank['ifsc'] }}">{{ $bank['name'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="ifsc_code">IFSC Code</label>
+                                                <input type="text" name="ifsc_code" id="ifsc_code" class="form-control" placeholder="IFSC Code" data-parsley-type="alphanum" required readonly />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="account_number">Account Number</label>
+                                                <input type="text" name="account_number" id="account_number" class="form-control" placeholder="Account Number" data-parsley-type="number" data-parsley-length="[8,25]" required readonly />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="beneficiary_name">Beneficiary Name</label>
+                                                <input type="text" name="beneficiary_name" id="beneficiary_name" class="form-control" placeholder="Beneficiary Name" required readonly />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="channel">Mode</label>
+                                                <select name="channel" id="channel" class="form-select" required>
+                                                    <option value="">-- Select Mode --</option>
+                                                    <option value="1">NEFT</option>
+                                                    <option value="2">IMPS</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="verification">Verification Charge Rs. 4</label>
+                                                <button type="button" id="verification" class="btn btn-success waves-effect waves-light w-100">Verify</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="amount">Amount</label>
+                                                <input type="text" name="amount" id="amount" class="form-control" placeholder="Amount" data-parsley-type="number" min="10" max="50000" required />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="debit_amount">Debit Amount</label>
+                                                <input type="text" name="debit_amount" id="debit_amount" class="form-control" placeholder="Debit Amount" data-parsley-type="number" min="10" max="50000" required readonly />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3" style="margin-top: 1.7rem;">
+                                                @csrf
+                                                <input type="hidden" name="beneId" value="">
+                                                <input type="hidden" name="clientId" value="">
+                                                <input type="hidden" name="beneficiary_id" value="">
+                                                <button type="submit" class="btn btn-primary waves-effect waves-light w-100 transfer-btn">Transfer Fund</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -113,68 +203,6 @@
                             <th class="text-center">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <p><b>Manjay Kumar</b></p>
-                                <p>A/C: <span>915010065900111</span></p>
-                                <p>IFSC:<span>UTI000001</span></p>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-success btn-sm w-25 ms-2">Verified</button>
-                                <button type="button" class="btn btn-primary btn-sm w-25 ms-2">Transfer</button>
-                                <button type="button" class="btn btn-danger btn-sm w-25 ms-2">Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <p><b>Sanjay Kumar</b></p>
-                                <p>A/C: <span>915010065900111</span></p>
-                                <p>IFSC:<span>UTI000001</span></p>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-success btn-sm w-25 ms-2">Verified</button>
-                                <button type="button" class="btn btn-primary btn-sm w-25 ms-2">Transfer</button>
-                                <button type="button" class="btn btn-danger btn-sm w-25 ms-2">Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <p><b>Manjay Kumar</b></p>
-                                <p>A/C: <span>915010065900111</span></p>
-                                <p>IFSC:<span>UTI000001</span></p>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-success btn-sm w-25 ms-2">Verified</button>
-                                <button type="button" class="btn btn-primary btn-sm w-25 ms-2">Transfer</button>
-                                <button type="button" class="btn btn-danger btn-sm w-25 ms-2">Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <p><b>Sanjay Kumar</b></p>
-                                <p>A/C: <span>915010065900111</span></p>
-                                <p>IFSC:<span>UTI000001</span></p>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-success btn-sm w-25 ms-2">Verified</button>
-                                <button type="button" class="btn btn-primary btn-sm w-25 ms-2">Transfer</button>
-                                <button type="button" class="btn btn-danger btn-sm w-25 ms-2">Delete</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <p><b>Sanjay Kumar</b></p>
-                                <p>A/C: <span>915010065900111</span></p>
-                                <p>IFSC:<span>UTI000001</span></p>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-success btn-sm w-25 ms-2">Verified</button>
-                                <button type="button" class="btn btn-primary btn-sm w-25 ms-2">Transfer</button>
-                                <button type="button" class="btn btn-danger btn-sm w-25 ms-2">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
                 </table>
             </div>
         </div>
@@ -182,12 +210,16 @@
 </div>
 @endsection
 
-@push('scripts')
-<link href="{{ asset('assets/admin/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" />
+@push('styles')
+<link href="{{ asset('assets/admin/libs/toastr/build/toastr.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/admin/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/admin/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 @endpush
 
 @push('scripts')
 <script src="{{ asset('assets/admin/libs/parsleyjs/parsley.min.js') }}"></script>
+<script src="{{ asset('assets/admin/libs/toastr/build/toastr.min.js') }}"></script>
+<script src="{{ asset('assets/admin/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('assets/admin/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/admin/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('assets/admin/js/beneficiary.js') }}"></script>

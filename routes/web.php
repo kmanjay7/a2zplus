@@ -25,8 +25,13 @@ Route::namespace('Admin')->middleware(['auth'])->group(function () {
         Route::resource('money-transfer', 'MoneyTransferController');
         Route::prefix('dmt')->name('dmt.')->group(function () {
             Route::get('logout', 'MoneyTransferController@logout')->name('logout');
-            Route::post('verifyOtp', 'MoneyTransferController@verifyOtp')->name('verifyOtp');
-            Route::post('resendOtp', 'MoneyTransferController@resendOtp')->name('resendOtp');
+            Route::get('get-ben/{id}', 'MoneyTransferController@getBen')->name('getBen');
+            Route::post('verify-otp', 'MoneyTransferController@verifyOtp')->name('verifyOtp');
+            Route::post('resend-otp', 'MoneyTransferController@resendOtp')->name('resendOtp');
+            Route::post('ben-delete', 'MoneyTransferController@benDelete')->name('benDelete');
+            Route::get('ben-list/{sender_id}', 'MoneyTransferController@benList')->name('benList');
+            Route::post('confirm-ben/{id}', 'MoneyTransferController@confirmBen')->name('confirmBen');
+            Route::post('trans-init/{id}', 'MoneyTransferController@transactionInit')->name('transactionInit');
         });
     });
 });           

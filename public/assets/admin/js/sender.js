@@ -56,7 +56,7 @@ $(document).ready(function() {
     });
     $('.verify-otp-form').parsley().on('form:submit', function() {
         $('.verify-otp-btn').text('Processing...');
-        $.post(`${BASE_URL}/admin/dmt/verifyOtp`, {
+        $.post(`${BASE_URL}/admin/dmt/verify-otp`, {
             otp: $('input[name="otp"]').val(),
             mobile: $('input[name="mobile"]').val()
         }, function(res) {
@@ -74,7 +74,7 @@ $(document).ready(function() {
     });
     $(document).on('click', '.resend-otp-btn', function() {
         $('.resend-otp-btn').text('Sending...');
-        $.post(`${BASE_URL}/admin/dmt/resendOtp`, {
+        $.post(`${BASE_URL}/admin/dmt/resend-otp`, {
             mobile: $('input[name="mobile"]').val()
         }, function(res) {
             $('.resend-otp-btn').text('Resend OTP');

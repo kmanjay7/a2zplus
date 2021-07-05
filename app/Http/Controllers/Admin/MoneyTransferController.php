@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Sender;
 use App\Models\Beneficiary;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Services\A2zSuvidhaa;
 use Yajra\Datatables\Datatables;
@@ -19,8 +20,6 @@ class MoneyTransferController extends Controller
      */
     public function index(Request $request)
     {
-        $banks = [];
-        
         $current_mobile = $request->session()->get('current_mobile');
 
         if (!$current_mobile) {
@@ -30,12 +29,7 @@ class MoneyTransferController extends Controller
 
         $sender = Sender::where(['mobile' => $current_mobile, 'status' => 1])->first();
 
-        $response = A2zSuvidhaa::getResponse('v3/get-bank-list', []);
-
-        if ($response['status'] == 1) {
-
-            $banks = $response['bankLists'];
-        }
+        $banks = json_decode(A2zSuvidhaa::getResponse('v3/get-bank-list', []), true);
 
         return view('admin.money-transfer.index', compact('sender', 'banks'));
     }
@@ -92,20 +86,20 @@ class MoneyTransferController extends Controller
                 'walletType' => 0
             ]);
             
-            if ($response['status'] == 12) { 
+            if (!empty($response['status']) && $response['status'] == 12) { 
 
                 Sender::create($data);
 
                 return response()->json([
                     'status' => 'success',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
 
             } else {
 
                 return response()->json([
                     'status' => 'error',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
             }
         }
@@ -114,7 +108,7 @@ class MoneyTransferController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  int  $mobile
      * @return \Illuminate\Http\Response
      */
     public function show($mobile, Request $request)
@@ -127,14 +121,14 @@ class MoneyTransferController extends Controller
                 'mobile' => $mobile
             ]);
 
-            if ($response['status'] == 12) {
+            if (!empty($response['status']) && $response['status'] == 12) {
 
                 return response()->json([
                     'status' => 'verification',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
     
-            } elseif ($response['status'] == 13) {
+            } elseif (!empty($response['status']) && $response['status'] == 13) {
     
                 $sender->update(['rem_bal' => $response['message']['rem_bal']]);
     
@@ -149,7 +143,7 @@ class MoneyTransferController extends Controller
     
                 return response()->json([
                     'status' => 'error',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
             }
 
@@ -176,7 +170,7 @@ class MoneyTransferController extends Controller
             'bank_name' => 'bail|required|string|max:255',
             'ifsc_code' => 'bail|required|alpha_num|max:25',
             'beneficiary_name' => 'bail|required|string|max:255',
-            'account_number' => 'bail|required|numeric|digits_between:9,18'
+            'account_number' => 'bail|required|numeric|digits_between:8,25'
         ]);
 
         if ($validator->fails()) {
@@ -200,7 +194,7 @@ class MoneyTransferController extends Controller
                 'accountNumber' => $data['account_number']
             ]);
     
-            if ($response['status'] == 35) {
+            if (!empty($response['status']) && $response['status'] == 35) {
 
                 $data['sender_id'] = $id;
 
@@ -210,37 +204,23 @@ class MoneyTransferController extends Controller
     
                 return response()->json([
                     'status' => 'success',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
     
             } else {
     
                 return response()->json([
                     'status' => 'error',
-                    'message' => $response['message']
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
             }
         }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Display the registration view.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $beneficiary = Beneficiary::find($id);
-
-        $beneficiary->delete();
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function logout(Request $request)
     {
@@ -250,9 +230,10 @@ class MoneyTransferController extends Controller
     }
 
     /**
-     * Display the registration view.
+     * Store a newly created resource in storage.
      *
-     * @return \Illuminate\View\View
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function verifyOtp(Request $request)
     {
@@ -261,7 +242,7 @@ class MoneyTransferController extends Controller
             'mobile' => $request->input('mobile')
         ]);
 
-        if ($response['status'] == 17) {
+        if (!empty($response['status']) && $response['status'] == 17) {
 
             $balance_response = A2zSuvidhaa::getResponse('v3/dmt/a2z-mobile-verification', [
                 'mobile' => $request->input('mobile')
@@ -276,22 +257,23 @@ class MoneyTransferController extends Controller
             return response()->json([
                 'status' => 'success',
                 'fullname' => $sender->fullname,
-                'message' => $response['message']
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
             ]);
 
         } else {
 
             return response()->json([
                 'status' => 'error',
-                'message' => $response['message']
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
             ]);
         }
     }
 
     /**
-     * Display the registration view.
+     * Store a newly created resource in storage.
      *
-     * @return \Illuminate\View\View
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
      */
     public function resendOtp(Request $request)
     {
@@ -299,7 +281,7 @@ class MoneyTransferController extends Controller
             'mobile' => $request->input('mobile')
         ]);
 
-        if ($response['status'] == 12) {
+        if (!empty($response['status']) && $response['status'] == 12) {
 
             return response()->json([
                 'status' => 'success',
@@ -310,8 +292,172 @@ class MoneyTransferController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => $response['message']
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
             ]);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $sender_id
+     * @return \Illuminate\Http\Response
+     */
+    public function benList($sender_id)
+    {
+        return Datatables::of(Beneficiary::where('sender_id', $sender_id))->make(true);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function getBen($id)
+    {
+        $beneficiary = Beneficiary::find($id);
+
+        if ($beneficiary) {
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $beneficiary,
+                'message' => 'Enter amount to be transferable'
+            ]);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Beneficiary Not Found'
+            ]);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function benDelete(Request $request)
+    {
+        $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-bene-delete-request', [
+            'beneId' => $request->input('beneId')
+        ]);
+
+        if (!empty($response['status']) && $response['status'] == 37) {
+
+            return response()->json([
+                'status' => 'success',
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+        }
+    }
+
+   /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function confirmBen($id, Request $request)
+    {
+        $beneficiary = Beneficiary::find($id);
+
+        $response = A2zSuvidhaa::getResponse('v3/dmt/bene-delete-confirm-otp', [
+            'otp' => $request->input('otp'),
+            'beneId' => $beneficiary->beneId
+        ]);
+
+        if (!empty($response['status']) && $response['status'] == 38) {
+
+            $beneficiary->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function transactionInit($id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'channel' => 'bail|required|numeric|min:1',
+            'beneId' => 'bail|required|string|max:255',
+            'clientId' => 'bail|required|string|max:255',
+            'ifsc_code' => 'bail|required|alpha_num|max:25',
+            'beneficiary_id' => 'bail|required|numeric|min:1',
+            'beneficiary_name' => 'bail|required|string|max:255',
+            'amount' => 'bail|required|numeric|digits_between:10,50000',
+            'account_number' => 'bail|required|numeric|digits_between:8,25',
+            'debit_amount' => 'bail|required|numeric|digits_between:10,50000'
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Send Validated Data'
+            ]);
+
+        } else {
+
+            $data = $request->all();
+
+            $sender = Sender::find($id);
+
+            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
+                'walletType' => 0,
+                'mobile' => $sender->mobile,
+                'beneId' => $data['beneId'],
+                'amount' => $data['amount'],
+                'channel' => $data['channel'],
+                'clientId' => $data['clientId'],
+                'accountNumber' => $data['account_number']
+            ]);
+            
+            if (!empty($response['status']) && in_array([3, 34], $response['status'])) { 
+
+                $data['sender_id'] = $id;
+
+                // Transaction::create($data);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+                ]);
+
+            } else {
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+                ]);
+            }
         }
     }
 }
