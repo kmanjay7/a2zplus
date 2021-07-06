@@ -34,6 +34,21 @@ $(document).ready(function() {
             }
         }]
     });
+    var transactionTable = $('#transaction-table').DataTable({
+        pageLength: 5,
+        lengthMenu: [5, 10, 20, 50, 100],
+        processing: true,
+        serverSide: true,
+        ajax: `${BASE_URL}/admin/dmt/trans-list/${$('input[name="sender_id"]').val()}`,
+        columns: [
+            { data: 'txnId', name: 'txnId' },
+            { data: 'mobile', name: 'mobile' },
+            { data: 'bank_name', name: 'bank_name' },
+            { data: 'channel', name: 'channel' },
+            { data: 'debit_amount', name: 'debit_amount' },
+            { data: 'trans_status', name: 'trans_status' }
+        ]
+    });
     $('.add-beneficiary-form select[name="bank_id"]').on('change', function() {
         if ($(this).find('option:selected').val()) {
             $('.add-beneficiary-form input[name="bank_name"]').val($(this).find('option:selected').text());

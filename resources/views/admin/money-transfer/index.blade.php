@@ -214,8 +214,12 @@
                 <table id="transaction-table" class="table table-striped table-bordered dt-responsive nowrap">
                     <thead>
                         <tr>
-                            <th>Details</th>
-                            <th class="text-center">Action</th>
+                            <th>Sr. No. <br> Order ID</th>
+                            <th>Sender Name <br> Sender Mobile</th>
+                            <th>Bank Name <br> Beneficiary Name <br> Account Number</th>
+                            <th>Mode</th>
+                            <th>Amount</th>
+                            <th>Status <br> Date & Time</th>
                         </tr>
                     </thead>
                 </table>

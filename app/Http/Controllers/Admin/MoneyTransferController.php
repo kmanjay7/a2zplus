@@ -417,7 +417,17 @@ class MoneyTransferController extends Controller
      */
     public function transList($sender_id)
     {
-        return Datatables::of(Transaction::where('sender_id', $sender_id))->make(true);
+        $transactions = Transaction::join('beneficiaries', 'transactions.beneficiary_id', '=', 'beneficiaries.id')
+                                ->join('senders', 'transactions.sender_id', '=', 'senders.id')
+                                ->select([
+                                    'transactions.*', 
+                                    'senders.first_name', 
+                                    'senders.last_name', 
+                                    'senders.mobile', 
+                                    'beneficiaries.bank_name'
+                                ]);
+
+        return Datatables::of($transactions)->make(true);
     }
 
     /**
@@ -495,15 +505,19 @@ class MoneyTransferController extends Controller
                 'walletType' => 0,
                 'mobile' => $sender->mobile,
                 'beneId' => $data['beneId'],
-                'amount' => $data['amount'],
                 'channel' => $data['channel'],
                 'clientId' => $data['clientId'],
+                'amount' => $data['debit_amount'],
                 'accountNumber' => $data['account_number']
             ]);
             
             if (!empty($response['status']) &&  $response['status'] == 3 ||  $response['status'] == 34) { 
 
                 $data['sender_id'] = $id;
+
+                $data['trans_type'] = 'transfer';
+
+                $data['trans_charge'] = $data['debit_amount'] - $data['amount'];
 
                 $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
 
@@ -533,12 +547,7 @@ class MoneyTransferController extends Controller
     public function instantPay(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'channel' => 'bail|required|numeric|min:1',
-            'beneId' => 'bail|required|string|max:255',
-            'clientId' => 'bail|required|string|max:255',
             'ifsc_code' => 'bail|required|alpha_num|max:25',
-            'beneficiary_id' => 'bail|required|numeric|min:1',
-            'beneficiary_name' => 'bail|required|string|max:255',
             'account_number' => 'bail|required|numeric|digits_between:8,25',
         ]);
 
@@ -556,43 +565,12 @@ class MoneyTransferController extends Controller
 
             $current_mobile = $request->session()->get('current_mobile');
 
-            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
-                'walletType' => 0,
-                'mobile' => $current_mobile,
-                'beneId' => $data['beneId'],
-                'amount' => $data['amount'],
-                'channel' => $data['channel'],
-                'clientId' => $data['clientId'],
-                'accountNumber' => $data['account_number']
-            ]);
-            
-            // if (!empty($response['status']) &&  $response['status'] == 3 ||  $response['status'] == 34) { 
-
-            //     $data['sender_id'] = $id;
-
-            //     $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
-
-            //     Transaction::create($data);
-
-            //     return response()->json([
-            //         'status' => 'success',
-            //         'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-            //     ]);
-
-            // } else {
-
-            //     return response()->json([
-            //         'status' => 'error',
-            //         'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-            //     ]);
-            // }
-
             $response = A2zSuvidhaa::instantPayResponse('ws/imps/account_validate', [
+                'ifsc' => $data['ifsc_code'],
                 'remittermobile' => $current_mobile,
-                'account' => 710000003704,
-                'ifsc' => 'PYTM0123456'
+                'account' => $data['account_number']
             ]);
-
+    
             return response()->json($response);
         }
     }
