@@ -22,4 +22,17 @@ class A2zSuvidhaa
 
         return $response;
     }
+
+    public static function instantPayResponse(string $uri = null, array $params = [])
+    {
+        $params = array_merge([
+            'token' => 'dc2dcd636fb7f9dd2a041b2e419743ef',
+            'agentid' => env('A2Z_USERID'),
+            'outletid' => 14702,
+        ], $params);
+
+        $response = Http::post($uri, $params);
+
+        return $response;
+    }
 }

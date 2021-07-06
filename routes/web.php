@@ -29,9 +29,13 @@ Route::namespace('Admin')->middleware(['auth'])->group(function () {
             Route::post('verify-otp', 'MoneyTransferController@verifyOtp')->name('verifyOtp');
             Route::post('resend-otp', 'MoneyTransferController@resendOtp')->name('resendOtp');
             Route::post('ben-delete', 'MoneyTransferController@benDelete')->name('benDelete');
+            Route::get('instant-pay', 'MoneyTransferController@instantPay')->name('instantPay');
             Route::get('ben-list/{sender_id}', 'MoneyTransferController@benList')->name('benList');
             Route::post('confirm-ben/{id}', 'MoneyTransferController@confirmBen')->name('confirmBen');
+            Route::get('trans-list/{sender_id}', 'MoneyTransferController@transList')->name('transList');
             Route::post('trans-init/{id}', 'MoneyTransferController@transactionInit')->name('transactionInit');
+            Route::post('ben-verification', 'MoneyTransferController@benVerification')->name('benVerification');
+            
         });
     });
 });           

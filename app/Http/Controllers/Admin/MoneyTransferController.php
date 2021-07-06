@@ -29,7 +29,9 @@ class MoneyTransferController extends Controller
 
         $sender = Sender::where(['mobile' => $current_mobile, 'status' => 1])->first();
 
-        $banks = json_decode(A2zSuvidhaa::getResponse('v3/get-bank-list', []), true);
+        $banks = [];
+
+        // $banks = json_decode(A2zSuvidhaa::getResponse('v3/get-bank-list', []), true);
 
         return view('admin.money-transfer.index', compact('sender', 'banks'));
     }
@@ -444,7 +446,9 @@ class MoneyTransferController extends Controller
 
                 $data['sender_id'] = $id;
 
-                // Transaction::create($data);
+                $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
+
+                Transaction::create($data);
 
                 return response()->json([
                     'status' => 'success',
@@ -459,5 +463,71 @@ class MoneyTransferController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $sender_id
+     * @return \Illuminate\Http\Response
+     */
+    public function transList($sender_id)
+    {
+        return Datatables::of(Transaction::where('sender_id', $sender_id))->make(true);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function benVerification(Request $request)
+    {
+        $current_mobile = $request->session()->get('current_mobile');
+
+        $response = A2zSuvidhaa::getResponse('v3/dmt/verify-account-number', [
+            'mobile' => $current_mobile,
+            'clientId' => $request->input('clientId'),
+            'ifscCode' => $request->input('ifsc_code'),
+            'bankName' => $request->input('bank_name'),
+            'accountNumber' => $request->input('account_number')
+        ]);
+
+        if (!empty($response['status']) && $response['status'] == 1) {
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $response,
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'data' => $response,
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function instantPay(Request $request)
+    {
+        $current_mobile = $request->session()->get('current_mobile');
+
+        $response = A2zSuvidhaa::instantPayResponse('https://www.instantpay.in/ws/imps/account_validate', [
+            'remittermobile' => $current_mobile,
+            'account' => 31510721885,
+            'ifsc' => 'SBIN0004659'
+        ]);
+
+        dd($response->body());
     }
 }

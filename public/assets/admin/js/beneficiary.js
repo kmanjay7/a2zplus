@@ -40,6 +40,23 @@ $(document).ready(function() {
             $('.add-beneficiary-form input[name="ifsc_code"]').val($(this).find('option:selected').data('ifsc_code'));
         }
     });
+    $('.add-beneficiary-form .verification-btn').on('click', function() {
+        $(this).text('Verifying...');
+        var form = $('.add-beneficiary-form');
+        var data = form.serializeArray().filter(function(item) {
+            return item.name != '_method';
+        });
+        $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
+            $(this).text('Verify');
+            if (res.status == 'success') {
+                $('.add-beneficiary-form input[name="clientId"]').val(res.data.clientId);
+                $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
+                toastr.success(res.message, 'Success');
+            } else {
+                toastr.error(res.message, 'Error');
+            }
+        });
+    });
     $('.add-beneficiary-form').parsley().on('form:submit', function() {
         $('.beneficiary-btn').text('Saving...');
         var form = $('.add-beneficiary-form');
@@ -113,6 +130,7 @@ $(document).ready(function() {
                 $('.transfer-fund-form input[name="clientId"]').val(res.data.clientId);
                 $('.transfer-fund-form input[name="beneficiary_id"]').val(res.data.id);
                 $('.transfer-fund-form input[name="ifsc_code"]').val(res.data.ifsc_code);
+                $('.transfer-fund-form input[name="bank_name"]').val(res.data.bank_name);
                 $('.transfer-fund-form input[name="account_number"]').val(res.data.account_number);
                 $('.transfer-fund-form input[name="beneficiary_name"]').val(res.data.beneficiary_name);
                 $(`.transfer-fund-form select[name="bank_id"] option[value="${res.data.bank_id}"]`).attr('selected', 'selected');
@@ -140,5 +158,22 @@ $(document).ready(function() {
             }
         });
         return false;
+    });
+    $('.transfer-fund-form .verification-btn').on('click', function() {
+        $(this).text('Verifying...');
+        var form = $('.transfer-fund-form');
+        var data = form.serializeArray().filter(function(item) {
+            return item.name != '_method';
+        });
+        $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
+            $(this).text('Verify');
+            if (res.status == 'success') {
+                $('.transfer-fund-form input[name="clientId"]').val(res.data.clientId);
+                $('.transfer-fund-form input[name="beneficiary_name"]').val(res.data.beneName);
+                toastr.success(res.message, 'Success');
+            } else {
+                toastr.error(res.message, 'Error');
+            }
+        });
     });
 });
