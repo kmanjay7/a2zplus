@@ -23,10 +23,10 @@ class CreateTransactionsTable extends Migration
             $table->float('amount');
             $table->float('debit_amount');
             $table->string('channel');
-            $table->string('txnId')->nullable();
-            $table->string('bankRefNo')->nullable();
             $table->string('beneId');
             $table->string('clientId');
+            $table->string('txnId')->nullable();
+            $table->string('bankRefNo')->nullable();
             $table->string('trans_status')->nullable();
             $table->timestamps();
             $table->boolean('status')->default(false);

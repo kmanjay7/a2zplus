@@ -23,10 +23,10 @@ class Transaction extends Model
         'amount',
         'debit_amount',
         'channel',
-        'txnId',
-        'bankRefNo',
         'beneId',
         'clientId',
+        'txnId',
+        'bankRefNo',
         'trans_status',
         'status'
     ];

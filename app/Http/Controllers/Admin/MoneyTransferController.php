@@ -29,9 +29,15 @@ class MoneyTransferController extends Controller
 
         $sender = Sender::where(['mobile' => $current_mobile, 'status' => 1])->first();
 
-        $banks = [];
+        $banks = json_decode(A2zSuvidhaa::getResponse('v3/get-bank-list', []), true);
 
-        // $banks = json_decode(A2zSuvidhaa::getResponse('v3/get-bank-list', []), true);
+        if (!empty($banks)) {
+
+            $banks = [
+                ['id' => 2, 'ifsc' => 'SBIN0008079', 'name' => 'STATE BANK OF INDIA (SBI)'],
+                ['id' => 3, 'ifsc' => 'BKID0007109', 'name' => 'BANK OF INDIA (BOI)']
+            ];
+        }
 
         return view('admin.money-transfer.index', compact('sender', 'banks'));
     }
@@ -74,6 +80,7 @@ class MoneyTransferController extends Controller
 
             return response()->json([
                 'status' => 'error',
+                'errors' => $validator->errors(),
                 'message' => 'Please Send Validated Data'
             ]);
 
@@ -82,10 +89,10 @@ class MoneyTransferController extends Controller
             $data = $request->all();
 
             $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-remitter-register', [
-                'fname' => $data['first_name'],
-                'lname' => $data['last_name'],
+                'walletType' => 0,
                 'mobile' => $data['mobile'],
-                'walletType' => 0
+                'fname' => $data['first_name'],
+                'lname' => $data['last_name']
             ]);
             
             if (!empty($response['status']) && $response['status'] == 12) { 
@@ -132,6 +139,7 @@ class MoneyTransferController extends Controller
     
             } elseif (!empty($response['status']) && $response['status'] == 13) {
     
+                // update remaining balance.
                 $sender->update(['rem_bal' => $response['message']['rem_bal']]);
     
                 $request->session()->put('current_mobile', $mobile);
@@ -179,6 +187,7 @@ class MoneyTransferController extends Controller
 
             return response()->json([
                 'status' => 'error',
+                'errors' => $validator->errors(),
                 'message' => 'Please Send Validated Data'
             ]);
 
@@ -188,7 +197,7 @@ class MoneyTransferController extends Controller
 
             $current_mobile = $request->session()->get('current_mobile');
 
-            $response = A2zSuvidhaa::getResponse('v3/dm/a2z-add-beneficiary', [
+            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-add-beneficiary', [
                 'mobile' => $current_mobile,
                 'ifscCode' => $data['ifsc_code'],
                 'bankName' => $data['bank_name'],
@@ -252,6 +261,7 @@ class MoneyTransferController extends Controller
 
             $sender = Sender::where(['mobile' => $request->input('mobile')])->first();
 
+            // update total balance
             $sender->update(['total_bal' => $balance_response['message']['rem_bal'], 'status' => 1]);
 
             $request->session()->put('current_mobile', $request->input('mobile'));
@@ -400,72 +410,6 @@ class MoneyTransferController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function transactionInit($id, Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'channel' => 'bail|required|numeric|min:1',
-            'beneId' => 'bail|required|string|max:255',
-            'clientId' => 'bail|required|string|max:255',
-            'ifsc_code' => 'bail|required|alpha_num|max:25',
-            'beneficiary_id' => 'bail|required|numeric|min:1',
-            'beneficiary_name' => 'bail|required|string|max:255',
-            'amount' => 'bail|required|numeric|digits_between:10,50000',
-            'account_number' => 'bail|required|numeric|digits_between:8,25',
-            'debit_amount' => 'bail|required|numeric|digits_between:10,50000'
-        ]);
-
-        if ($validator->fails()) {
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Send Validated Data'
-            ]);
-
-        } else {
-
-            $data = $request->all();
-
-            $sender = Sender::find($id);
-
-            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
-                'walletType' => 0,
-                'mobile' => $sender->mobile,
-                'beneId' => $data['beneId'],
-                'amount' => $data['amount'],
-                'channel' => $data['channel'],
-                'clientId' => $data['clientId'],
-                'accountNumber' => $data['account_number']
-            ]);
-            
-            if (!empty($response['status']) && in_array([3, 34], $response['status'])) { 
-
-                $data['sender_id'] = $id;
-
-                $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
-
-                Transaction::create($data);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-                ]);
-
-            } else {
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-                ]);
-            }
-        }
-    }
-
-    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $sender_id
@@ -488,7 +432,7 @@ class MoneyTransferController extends Controller
 
         $response = A2zSuvidhaa::getResponse('v3/dmt/verify-account-number', [
             'mobile' => $current_mobile,
-            'clientId' => $request->input('clientId'),
+            'clientId' => 'ACVR'.date('Ymd').''.rand(10000, 100000),
             'ifscCode' => $request->input('ifsc_code'),
             'bankName' => $request->input('bank_name'),
             'accountNumber' => $request->input('account_number')
@@ -518,16 +462,138 @@ class MoneyTransferController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function instantPay(Request $request)
+    public function transactionInit($id, Request $request)
     {
-        $current_mobile = $request->session()->get('current_mobile');
-
-        $response = A2zSuvidhaa::instantPayResponse('https://www.instantpay.in/ws/imps/account_validate', [
-            'remittermobile' => $current_mobile,
-            'account' => 31510721885,
-            'ifsc' => 'SBIN0004659'
+        $validator = Validator::make($request->all(), [
+            'amount' => 'bail|required|numeric',
+            'debit_amount' => 'bail|required|numeric',
+            'channel' => 'bail|required|numeric|min:1',
+            'beneId' => 'bail|required|string|max:255',
+            'ifsc_code' => 'bail|required|alpha_num|max:25',
+            'beneficiary_id' => 'bail|required|numeric|min:1',
+            'beneficiary_name' => 'bail|required|string|max:255',
+            'account_number' => 'bail|required|numeric|digits_between:8,25',
         ]);
 
-        dd($response->body());
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+                'message' => 'Please Send Validated Data'
+            ]);
+
+        } else {
+
+            $data = $request->all();
+
+            $sender = Sender::find($id);
+
+            $data['clientId'] = 'ACVR'.date('Ymd').''.rand(10000, 100000);
+
+            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
+                'walletType' => 0,
+                'mobile' => $sender->mobile,
+                'beneId' => $data['beneId'],
+                'amount' => $data['amount'],
+                'channel' => $data['channel'],
+                'clientId' => $data['clientId'],
+                'accountNumber' => $data['account_number']
+            ]);
+            
+            if (!empty($response['status']) &&  $response['status'] == 3 ||  $response['status'] == 34) { 
+
+                $data['sender_id'] = $id;
+
+                $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
+
+                Transaction::create($data);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+                ]);
+
+            } else {
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function instantPay(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'channel' => 'bail|required|numeric|min:1',
+            'beneId' => 'bail|required|string|max:255',
+            'clientId' => 'bail|required|string|max:255',
+            'ifsc_code' => 'bail|required|alpha_num|max:25',
+            'beneficiary_id' => 'bail|required|numeric|min:1',
+            'beneficiary_name' => 'bail|required|string|max:255',
+            'account_number' => 'bail|required|numeric|digits_between:8,25',
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors(),
+                'message' => 'Please Send Validated Data'
+            ]);
+
+        } else {
+
+            $data = $request->all();
+
+            $current_mobile = $request->session()->get('current_mobile');
+
+            $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
+                'walletType' => 0,
+                'mobile' => $current_mobile,
+                'beneId' => $data['beneId'],
+                'amount' => $data['amount'],
+                'channel' => $data['channel'],
+                'clientId' => $data['clientId'],
+                'accountNumber' => $data['account_number']
+            ]);
+            
+            // if (!empty($response['status']) &&  $response['status'] == 3 ||  $response['status'] == 34) { 
+
+            //     $data['sender_id'] = $id;
+
+            //     $data['trans_status'] = str_replace('Transaction ', '', $response['message']);
+
+            //     Transaction::create($data);
+
+            //     return response()->json([
+            //         'status' => 'success',
+            //         'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            //     ]);
+
+            // } else {
+
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            //     ]);
+            // }
+
+            $response = A2zSuvidhaa::instantPayResponse('ws/imps/account_validate', [
+                'remittermobile' => $current_mobile,
+                'account' => 710000003704,
+                'ifsc' => 'PYTM0123456'
+            ]);
+
+            return response()->json($response);
+        }
     }
 }

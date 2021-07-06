@@ -92,7 +92,6 @@
                             <div class="mb-3" style="margin-top: 1.7rem;">
                                 @csrf
                                 @method('PUT')
-                                <input type="hidden" name="clientId" value="{{ rand(100, 1000) }}">
                                 <input type="hidden" name="bank_name" value="">
                                 <button type="submit" class="btn btn-primary waves-effect waves-light w-100 beneficiary-btn">Add Beneficiary</button>
                             </div>
@@ -178,8 +177,7 @@
                                                 @csrf
                                                 <input type="hidden" name="bank_name" value="">
                                                 <input type="hidden" name="beneficiary_id" value="">
-                                                <input type="hidden" name="beneId" value="1234">
-                                                <input type="hidden" name="clientId" value="{{ rand(100, 1000) }}">
+                                                <input type="hidden" name="beneId" value="">
                                                 <button type="submit" class="btn btn-primary waves-effect waves-light w-100 transfer-btn">Transfer Fund</button>
                                             </div>
                                         </div>

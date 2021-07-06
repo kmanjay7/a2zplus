@@ -21,10 +21,7 @@ class CreateBeneficiariesTable extends Migration
             $table->string('ifsc_code');
             $table->string('account_number');
             $table->string('beneficiary_name');
-            $table->bigInteger('beneId')->nullable();
-            $table->bigInteger('txnId')->nullable();
-            $table->bigInteger('clientId')->nullable();
-            $table->string('bankRefNo')->nullable();
+            $table->string('beneId')->nullable();
             $table->timestamps();
             $table->boolean('status')->default(false);
         });

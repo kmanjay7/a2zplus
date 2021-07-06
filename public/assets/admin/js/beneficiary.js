@@ -49,7 +49,6 @@ $(document).ready(function() {
         $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
             $(this).text('Verify');
             if (res.status == 'success') {
-                $('.add-beneficiary-form input[name="clientId"]').val(res.data.clientId);
                 $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
                 toastr.success(res.message, 'Success');
             } else {
@@ -127,7 +126,6 @@ $(document).ready(function() {
         $.get(`${BASE_URL}/admin/dmt/get-ben/${id}`, function(res) {
             if (res.status == 'success') {
                 $('.transfer-fund-form input[name="beneId"]').val(res.data.beneId);
-                $('.transfer-fund-form input[name="clientId"]').val(res.data.clientId);
                 $('.transfer-fund-form input[name="beneficiary_id"]').val(res.data.id);
                 $('.transfer-fund-form input[name="ifsc_code"]').val(res.data.ifsc_code);
                 $('.transfer-fund-form input[name="bank_name"]').val(res.data.bank_name);
@@ -152,6 +150,7 @@ $(document).ready(function() {
             $('.transfer-btn').text('Transfer Fund');
             if (res.status == 'success') {
                 $('.transfer-fund-form')[0].reset();
+                $('#fundTransfer #fund-accordion').removeClass('show');
                 toastr.success(res.message, 'Success');
             } else {
                 toastr.error(res.message, 'Error');
@@ -168,7 +167,6 @@ $(document).ready(function() {
         $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
             $(this).text('Verify');
             if (res.status == 'success') {
-                $('.transfer-fund-form input[name="clientId"]').val(res.data.clientId);
                 $('.transfer-fund-form input[name="beneficiary_name"]').val(res.data.beneName);
                 toastr.success(res.message, 'Success');
             } else {

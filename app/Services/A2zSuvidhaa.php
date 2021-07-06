@@ -25,13 +25,19 @@ class A2zSuvidhaa
 
     public static function instantPayResponse(string $uri = null, array $params = [])
     {
-        $params = array_merge([
-            'token' => 'dc2dcd636fb7f9dd2a041b2e419743ef',
-            'agentid' => env('A2Z_USERID'),
-            'outletid' => 14702,
-        ], $params);
+        $url = env('INSTANTPAY_URL');
 
-        $response = Http::post($uri, $params);
+        $url .= $uri;
+
+        $params = [
+            'token' => env('INSTANTPAY_TOKEN'),
+            'request' => array_merge([
+                'agentid' => env('INSTANTPAY_AGENTID'),
+                'outletid' => env('INSTANTPAY_OUTLETID')
+            ], $params)
+        ];
+
+        $response = Http::post($url, $params);
 
         return $response;
     }

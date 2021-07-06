@@ -22,9 +22,6 @@ class Beneficiary extends Model
         'account_number',
         'beneficiary_name',
         'beneId',
-        'txnId',
-        'clientId',
-        'bankRefNo',
         'status'
     ];
 }
