@@ -28,6 +28,7 @@ class CreateTransactionsTable extends Migration
             $table->string('txnId')->nullable();
             $table->string('bankRefNo')->nullable();
             $table->string('trans_status')->nullable();
+            $table->string('trans_type')->default('transfer');
             $table->timestamps();
             $table->boolean('status')->default(false);
         });
