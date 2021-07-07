@@ -93,6 +93,7 @@
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="bank_name" value="">
+                                <input type="hidden" name="status" value="0">
                                 <button type="submit" class="btn btn-primary waves-effect waves-light w-100 beneficiary-btn">Add Beneficiary</button>
                             </div>
                         </div>
@@ -214,12 +215,13 @@
                 <table id="transaction-table" class="table table-striped table-bordered dt-responsive nowrap">
                     <thead>
                         <tr>
-                            <th>Sr. No. <br> Order ID</th>
-                            <th>Sender Name <br> Sender Mobile</th>
-                            <th>Bank Name <br> Beneficiary Name <br> Account Number</th>
+                            <th>Order ID</th>
+                            <th>Sender Details</th>
+                            <th>Beneficiary Details</th>
                             <th>Mode</th>
                             <th>Amount</th>
-                            <th>Status <br> Date & Time</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                 </table>

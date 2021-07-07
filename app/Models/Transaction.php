@@ -30,4 +30,20 @@ class Transaction extends Model
         'trans_status',
         'status'
     ];
+
+    /**
+     * Get the sender for the post.
+     */
+    public function sender()
+    {
+        return $this->belongsTo('App\Models\Sender', 'sender_id', 'id');
+    }
+
+    /**
+     * Get the beneficiary for the post.
+     */
+    public function beneficiary()
+    {
+        return $this->belongsTo('App\Models\Beneficiary', 'beneficiary_id', 'id');
+    }
 }

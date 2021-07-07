@@ -417,53 +417,17 @@ class MoneyTransferController extends Controller
      */
     public function transList($sender_id)
     {
-        $transactions = Transaction::join('beneficiaries', 'transactions.beneficiary_id', '=', 'beneficiaries.id')
-                                ->join('senders', 'transactions.sender_id', '=', 'senders.id')
-                                ->select([
-                                    'transactions.*', 
-                                    'senders.first_name', 
-                                    'senders.last_name', 
-                                    'senders.mobile', 
-                                    'beneficiaries.bank_name'
-                                ]);
+        $transactions = Transaction::where('sender_id', $sender_id)->get();
+        
+        $transactions->map(function ($transaction) {
+            $transaction['sender_mobile'] = $transaction->sender->mobile;
+            $transaction['sender_name'] = $transaction->sender->full_name;
+            $transaction['bank_name'] = $transaction->beneficiary->bank_name;
+            $transaction['channel'] = ($transaction->channel == 1) ? 'NEFT' : 'IMPS';
+            $transaction['created_at'] = date('Y-m-d H:i:s', strtotime($transaction->created_at));
+        });
 
         return Datatables::of($transactions)->make(true);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function benVerification(Request $request)
-    {
-        $current_mobile = $request->session()->get('current_mobile');
-
-        $response = A2zSuvidhaa::getResponse('v3/dmt/verify-account-number', [
-            'mobile' => $current_mobile,
-            'clientId' => 'ACVR'.date('Ymd').''.rand(10000, 100000),
-            'ifscCode' => $request->input('ifsc_code'),
-            'bankName' => $request->input('bank_name'),
-            'accountNumber' => $request->input('account_number')
-        ]);
-
-        if (!empty($response['status']) && $response['status'] == 1) {
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $response,
-                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-            ]);
-
-        } else {
-
-            return response()->json([
-                'status' => 'error',
-                'data' => $response,
-                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
-            ]);
-        }
     }
 
     /**
@@ -535,6 +499,42 @@ class MoneyTransferController extends Controller
                     'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
                 ]);
             }
+        }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function benVerification(Request $request)
+    {
+        $current_mobile = $request->session()->get('current_mobile');
+
+        $response = A2zSuvidhaa::getResponse('v3/dmt/verify-account-number', [
+            'mobile' => $current_mobile,
+            'clientId' => 'ACVR'.date('Ymd').''.rand(10000, 100000),
+            'ifscCode' => $request->input('ifsc_code'),
+            'bankName' => $request->input('bank_name'),
+            'accountNumber' => $request->input('account_number')
+        ]);
+
+        if (!empty($response['status']) && $response['status'] == 1) {
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $response,
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'data' => $response,
+                'message' => !empty($response['message']) ? $response['message'] : 'A2Z Server Not Responsed'
+            ]);
         }
     }
 

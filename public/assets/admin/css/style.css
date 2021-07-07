@@ -1,9 +1,12 @@
 #beneficiary-table tbody th,
-#beneficiary-table tbody td {
+#beneficiary-table tbody td,
+#transaction-table tbody th,
+#transaction-table tbody td {
     vertical-align: middle;
 }
 
-#beneficiary-table tbody td p {
+#beneficiary-table tbody td p,
+#transaction-table tbody td p {
     line-height: 1em;
 }
 

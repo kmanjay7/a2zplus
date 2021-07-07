@@ -19,15 +19,24 @@ $(document).ready(function() {
             render: function render(data, type, row, meta) {
                 return `<div class="text-left">
                             <p><b>${row.beneficiary_name}</b></p>
-                            <p>Account No: <span>${row.account_number}</span></p>
+                            <p>A/C No: <span>${row.account_number}</span></p>
                             <p>IFSC Code: <span>${row.ifsc_code}</span></p>
+                            <p>Bank Name: <span>${row.bank_name}</span></p>
                         </div>`;
             }
         }, {
             targets: 1,
             render: function render(data, type, row, meta) {
+                var className, buttonText = '';
+                if (row.status) {
+                    className = 'success';
+                    buttonText = 'Verified';
+                } else {
+                    className = 'warning';
+                    buttonText = 'Unverified';
+                }
                 return `<div class="text-center">
-                            <button type="button" data-id="${row.id}" data-beneId="${row.beneId}" class="btn btn-success btn-sm w-25 ms-2 verified">Verified</button>
+                            <button type="button" data-id="${row.id}" data-beneId="${row.beneId}" class="btn btn-${className} btn-sm w-30 ms-2">${buttonText}</button>
                             <button type="button" data-id="${row.id}" data-beneId="${row.beneId}" class="btn btn-primary btn-sm w-25 ms-2 transfer">Transfer</button>
                             <button type="button" data-id="${row.id}" data-beneId="${row.beneId}" class="btn btn-danger btn-sm w-25 ms-2 delete">Delete</button>
                         </div>`;
@@ -42,34 +51,55 @@ $(document).ready(function() {
         ajax: `${BASE_URL}/admin/dmt/trans-list/${$('input[name="sender_id"]').val()}`,
         columns: [
             { data: 'txnId', name: 'txnId' },
-            { data: 'mobile', name: 'mobile' },
-            { data: 'bank_name', name: 'bank_name' },
+            { data: 'sender_name', name: 'sender_name' },
+            { data: 'beneficiary_name', name: 'beneficiary_name' },
             { data: 'channel', name: 'channel' },
             { data: 'debit_amount', name: 'debit_amount' },
+            { data: 'created_at', name: 'created_at' },
             { data: 'trans_status', name: 'trans_status' }
-        ]
+        ],
+        columnDefs: [{
+            targets: 1,
+            render: function render(data, type, row, meta) {
+                return `<div class="text-left">
+                            <p><b>${row.sender_name}</b></p>
+                            <p><span>${row.sender_mobile}</span></p>
+                        </div>`;
+            }
+        }, {
+            targets: 2,
+            render: function render(data, type, row, meta) {
+                return `<div class="text-left">
+                            <p><b>${row.beneficiary_name}</b></p>
+                            <p>A/C No: <span>${row.account_number}</span></p>
+                            <p>IFSC Code: <span>${row.ifsc_code}</span></p>
+                            <p>Bank Name: <span>${row.bank_name}</span></p>
+                        </div>`;
+            }
+        }, {
+            targets: 6,
+            render: function render(data, type, row, meta) {
+                var className = '';
+                if (row.trans_status == 'SUCCESS') {
+                    className = 'success';
+                } else if (row.trans_status == 'ACCEPTED') {
+                    className = 'info';
+                } else if (row.trans_status == 'PENDING') {
+                    className = 'danger';
+                } else {
+                    className = 'dark';
+                }
+                return `<div class="text-center">
+                            <button type="button" class="btn btn-${className} btn-sm w-100">${row.trans_status}</button>
+                        </div>`;
+            }
+        }]
     });
     $('.add-beneficiary-form select[name="bank_id"]').on('change', function() {
         if ($(this).find('option:selected').val()) {
             $('.add-beneficiary-form input[name="bank_name"]').val($(this).find('option:selected').text());
             $('.add-beneficiary-form input[name="ifsc_code"]').val($(this).find('option:selected').data('ifsc_code'));
         }
-    });
-    $('.add-beneficiary-form .verification-btn').on('click', function() {
-        $(this).text('Verifying...');
-        var form = $('.add-beneficiary-form');
-        var data = form.serializeArray().filter(function(item) {
-            return item.name != '_method';
-        });
-        $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
-            $(this).text('Verify');
-            if (res.status == 'success') {
-                $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
-                toastr.success(res.message, 'Success');
-            } else {
-                toastr.error(res.message, 'Error');
-            }
-        });
     });
     $('.add-beneficiary-form').parsley().on('form:submit', function() {
         $('.beneficiary-btn').text('Saving...');
@@ -166,6 +196,7 @@ $(document).ready(function() {
             if (res.status == 'success') {
                 $('.transfer-fund-form')[0].reset();
                 $('#fundTransfer #fund-accordion').removeClass('show');
+                transactionTable.ajax.reload();
                 toastr.success(res.message, 'Success');
             } else {
                 toastr.error(res.message, 'Error');
@@ -173,20 +204,36 @@ $(document).ready(function() {
         });
         return false;
     });
-    $('.transfer-fund-form .verification-btn').on('click', function() {
-        $(this).text('Verifying...');
-        var form = $('.transfer-fund-form');
-        var data = form.serializeArray().filter(function(item) {
-            return item.name != '_method';
-        });
-        $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
-            $(this).text('Verify');
-            if (res.status == 'success') {
-                $('.transfer-fund-form input[name="beneficiary_name"]').val(res.data.beneName);
-                toastr.success(res.message, 'Success');
-            } else {
-                toastr.error(res.message, 'Error');
-            }
-        });
-    });
+    // $('.add-beneficiary-form .verification-btn').on('click', function() {
+    //     $(this).text('Verifying...');
+    //     var form = $('.add-beneficiary-form');
+    //     var data = form.serializeArray().filter(function(item) {
+    //         return item.name != '_method';
+    //     });
+    //     $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
+    //         $(this).text('Verify');
+    //         if (res.status == 'success') {
+    //             $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
+    //             toastr.success(res.message, 'Success');
+    //         } else {
+    //             toastr.error(res.message, 'Error');
+    //         }
+    //     });
+    // });
+    // $('.transfer-fund-form .verification-btn').on('click', function() {
+    //     $(this).text('Verifying...');
+    //     var form = $('.transfer-fund-form');
+    //     var data = form.serializeArray().filter(function(item) {
+    //         return item.name != '_method';
+    //     });
+    //     $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
+    //         $(this).text('Verify');
+    //         if (res.status == 'success') {
+    //             $('.transfer-fund-form input[name="beneficiary_name"]').val(res.data.beneName);
+    //             toastr.success(res.message, 'Success');
+    //         } else {
+    //             toastr.error(res.message, 'Error');
+    //         }
+    //     });
+    // });
 });
