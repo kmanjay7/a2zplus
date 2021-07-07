@@ -27,7 +27,10 @@ class Transaction extends Model
         'clientId',
         'txnId',
         'bankRefNo',
+        'trans_charge',
         'trans_status',
+        'trans_desc',
+        'trans_type',
         'status'
     ];
 

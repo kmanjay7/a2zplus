@@ -33,7 +33,7 @@ $(document).ready(function() {
                     buttonText = 'Verified';
                 } else {
                     className = 'warning';
-                    buttonText = 'Unverified';
+                    buttonText = 'Not Verified';
                 }
                 return `<div class="text-center">
                             <button type="button" data-id="${row.id}" data-beneId="${row.beneId}" class="btn btn-${className} btn-sm w-30 ms-2">${buttonText}</button>
@@ -50,13 +50,13 @@ $(document).ready(function() {
         serverSide: true,
         ajax: `${BASE_URL}/admin/dmt/trans-list/${$('input[name="sender_id"]').val()}`,
         columns: [
-            { data: 'txnId', name: 'txnId' },
+            { data: 'txnId', name: 'txnId', className: 'text-center' },
             { data: 'sender_name', name: 'sender_name' },
             { data: 'beneficiary_name', name: 'beneficiary_name' },
-            { data: 'channel', name: 'channel' },
-            { data: 'debit_amount', name: 'debit_amount' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'trans_status', name: 'trans_status' }
+            { data: 'channel', name: 'channel', className: 'text-center' },
+            { data: 'debit_amount', name: 'debit_amount', className: 'text-center' },
+            { data: 'date_time', name: 'date_time', className: 'text-center' },
+            { data: 'trans_status', name: 'trans_status', className: 'text-center' }
         ],
         columnDefs: [{
             targets: 1,
@@ -89,9 +89,7 @@ $(document).ready(function() {
                 } else {
                     className = 'dark';
                 }
-                return `<div class="text-center">
-                            <button type="button" class="btn btn-${className} btn-sm w-100">${row.trans_status}</button>
-                        </div>`;
+                return `<button type="button" class="btn btn-${className} btn-sm w-100">${row.trans_status}</button>`;
             }
         }]
     });
@@ -102,10 +100,11 @@ $(document).ready(function() {
         }
     });
     $('.add-beneficiary-form').parsley().on('form:submit', function() {
-        $('.beneficiary-btn').text('Saving...');
+        var button = $('.beneficiary-btn');
         var form = $('.add-beneficiary-form');
+        button.text('Saving...');
         $.post(form.attr('action'), form.serializeArray(), function(res) {
-            $('.beneficiary-btn').text('Add Beneficiary');
+            button.text('Add Beneficiary');
             if (res.status == 'success') {
                 beneficiaryTable.ajax.reload();
                 toastr.success(res.message, 'Success');
@@ -166,9 +165,10 @@ $(document).ready(function() {
     });
     $(document).on('click', '.transfer', function() {
         var button = $(this);
-        button.text('Searching...');
         var id = button.data('id');
+        button.text('Searching...');
         $.get(`${BASE_URL}/admin/dmt/get-ben/${id}`, function(res) {
+            button.text('Transfer');
             if (res.status == 'success') {
                 $('.transfer-fund-form input[name="beneId"]').val(res.data.beneId);
                 $('.transfer-fund-form input[name="beneficiary_id"]').val(res.data.id);
@@ -182,17 +182,17 @@ $(document).ready(function() {
             } else {
                 toastr.error(res.message, 'Error');
             }
-            button.text('Transfer');
         });
     });
     $('.transfer-fund-form input[name="amount"]').keyup(function() {
         $('.transfer-fund-form input[name="debit_amount"]').val($(this).val());
     });
     $('.transfer-fund-form').parsley().on('form:submit', function() {
-        $('.transfer-btn').text('Transfering...');
+        var button = $('.transfer-btn');
         var form = $('.transfer-fund-form');
+        button.text('Transfering...');
         $.post(form.attr('action'), form.serializeArray(), function(res) {
-            $('.transfer-btn').text('Transfer Fund');
+            button.text('Transfer Fund');
             if (res.status == 'success') {
                 $('.transfer-fund-form')[0].reset();
                 $('#fundTransfer #fund-accordion').removeClass('show');
@@ -203,6 +203,14 @@ $(document).ready(function() {
             }
         });
         return false;
+    });
+    $.get(`${BASE_URL}/admin/dmt/trans-check/${$('input[name="sender_id"]').val()}`, function(res) {
+        transactionTable.ajax.reload();
+        if (res.status == 'success') {
+            toastr.success(res.message, 'Success');
+        } else {
+            toastr.error(res.message, 'Error');
+        }
     });
     // $('.add-beneficiary-form .verification-btn').on('click', function() {
     //     $(this).text('Verifying...');

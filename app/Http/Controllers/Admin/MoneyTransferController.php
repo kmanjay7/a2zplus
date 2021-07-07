@@ -424,10 +424,50 @@ class MoneyTransferController extends Controller
             $transaction['sender_name'] = $transaction->sender->full_name;
             $transaction['bank_name'] = $transaction->beneficiary->bank_name;
             $transaction['channel'] = ($transaction->channel == 1) ? 'NEFT' : 'IMPS';
-            $transaction['created_at'] = date('Y-m-d H:i:s', strtotime($transaction->created_at));
+            $transaction['date_time'] = date('Y-m-d H:i:s a', strtotime($transaction->created_at));
         });
 
         return Datatables::of($transactions)->make(true);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $sender_id
+     * @return \Illuminate\Http\Response
+     */
+    public function transCheck($sender_id)
+    {
+        $transactions = Transaction::where(['sender_id' => $sender_id, 'status' => false])->whereNotIn('trans_status', ['SUCCESS'])->get();
+        
+        foreach ($transactions as $transaction) {
+
+            $response = A2zSuvidhaa::getResponse('v3/check-status', [
+                'clientId' => $transaction->clientId
+            ]);
+
+            if (!empty($response['status']) && in_array($response['status'], [44, 59, 33, 137, 57, 55, 47])) { 
+
+                $transaction->update([
+                    'bankRefNo' => $response['bankRefNo'],
+                    'trans_status' => $response['message'],
+                    'trans_desc' => $response['description'],
+                    'status' => ($response['message'] == 'SUCCESS') ? true : false
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Transaction updated successfully'
+                ]);
+
+            } else {
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $response['message']
+                ]);
+            }
+        }
     }
 
     /**
@@ -463,7 +503,7 @@ class MoneyTransferController extends Controller
 
             $sender = Sender::find($id);
 
-            $data['clientId'] = 'ACVR'.date('Ymd').''.rand(10000, 100000);
+            $data['clientId'] = 'DG'.date('Ymd').''.rand(10000, 100000);
 
             $response = A2zSuvidhaa::getResponse('v3/dmt/a2z-transaction', [
                 'walletType' => 0,
@@ -480,6 +520,8 @@ class MoneyTransferController extends Controller
                 $data['sender_id'] = $id;
 
                 $data['trans_type'] = 'transfer';
+
+                $data['txnId'] = $response['txnId'];
 
                 $data['trans_charge'] = $data['debit_amount'] - $data['amount'];
 
@@ -514,7 +556,7 @@ class MoneyTransferController extends Controller
 
         $response = A2zSuvidhaa::getResponse('v3/dmt/verify-account-number', [
             'mobile' => $current_mobile,
-            'clientId' => 'ACVR'.date('Ymd').''.rand(10000, 100000),
+            'clientId' => 'DG'.date('Ymd').''.rand(10000, 100000),
             'ifscCode' => $request->input('ifsc_code'),
             'bankName' => $request->input('bank_name'),
             'accountNumber' => $request->input('account_number')

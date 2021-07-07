@@ -33,9 +33,9 @@ Route::namespace('Admin')->middleware(['auth'])->group(function () {
             Route::get('ben-list/{sender_id}', 'MoneyTransferController@benList')->name('benList');
             Route::post('confirm-ben/{id}', 'MoneyTransferController@confirmBen')->name('confirmBen');
             Route::get('trans-list/{sender_id}', 'MoneyTransferController@transList')->name('transList');
+            Route::get('trans-check/{sender_id}', 'MoneyTransferController@transCheck')->name('transCheck');
             Route::post('trans-init/{id}', 'MoneyTransferController@transactionInit')->name('transactionInit');
             Route::post('ben-verification', 'MoneyTransferController@benVerification')->name('benVerification');
-            
         });
     });
 });           

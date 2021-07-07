@@ -215,13 +215,13 @@
                 <table id="transaction-table" class="table table-striped table-bordered dt-responsive nowrap">
                     <thead>
                         <tr>
-                            <th>Order ID</th>
-                            <th>Sender Details</th>
-                            <th>Beneficiary Details</th>
-                            <th>Mode</th>
-                            <th>Amount</th>
-                            <th>Date & Time</th>
-                            <th>Status</th>
+                            <th class="text-center">Transaction ID</th>
+                            <th>Sender</th>
+                            <th>Beneficiary</th>
+                            <th class="text-center">Mode</th>
+                            <th class="text-center">Amount</th>
+                            <th class="text-center">Date & Time</th>
+                            <th class="text-center">Status</th>
                         </tr>
                     </thead>
                 </table>

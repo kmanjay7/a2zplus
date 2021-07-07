@@ -29,6 +29,7 @@ class CreateTransactionsTable extends Migration
             $table->string('bankRefNo')->nullable();
             $table->float('trans_charge')->nullable();
             $table->string('trans_status')->nullable();
+            $table->text('trans_desc')->nullable();
             $table->string('trans_type')->default('transfer');
             $table->timestamps();
             $table->boolean('status')->default(false);
