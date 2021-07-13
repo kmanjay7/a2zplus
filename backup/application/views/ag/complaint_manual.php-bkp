@@ -1,0 +1,180 @@
+<div class="content">
+   <div class="container">
+    <form action="" method="post" enctype="multipart/form-data">
+      <section class="cash-area"> 
+         <div class="cash-payment">
+            <div class="common-heading">
+               <h2 class="color-blue"> <?=$title;?></h2>
+            </div>
+            <div class="filter-area">
+               <div class="row">
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> Name </label>
+                     <input required="" name="name" type="name" class="form-control" placeholder="Enter Name" id="name" maxlength="50" autocomplete="off" value="">
+                  </div>
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> User Id </label>
+                     <input readonly="" type="text" class="form-control" placeholder="Enter User Id" id="user_id" autocomplete="off" value="<?=$this->session->userdata('uniqueid')?>">
+                  </div>
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> Email Id </label>
+                     <input required="" name="email_id" type="email" class="form-control" placeholder="Enter Email Id" id="email_id"  autocomplete="off" value="">
+                  </div>
+                  <div class="col-md-12 col-lg-12 col-12" style="margin-top: 20px;">
+                     <label for=""> Complaint Message </label>
+                     <textarea style="height: 100px;" required="" name="complaint_message" type="text" class="form-control" placeholder="Enter Complaint Message" id="complaint_message"></textarea>
+                  </div>
+                  <div class="col-md-6 col-lg-6 col-12" style="margin-top: 20px;">
+                     <label for=""> Upload Documents (Max-5)<sup>(png, jpg, pdf)</sup> </label>
+                     <input name="files[]" type="file" multiple="" class="form-control" id="image">
+                  </div>
+               </div>
+            </div>
+            <div class="filter-area">
+               <div class="row ">
+                  <div class="col-md-3 col-lg-3 col-12  "> 
+                     <input class="form-control apply-filter w-100 ap_bg" id="rc" value="Submit" type="submit">
+                  </div>
+               </div> 
+            </div>
+         </div>
+      </section>
+    </form>
+
+    <form action="">
+      <section class="cash-area">
+         <div class="cash-payment">
+            <div class="common-heading">
+               <h2 class="color-blue">Filter</h2>
+            </div>
+            <div class="filter-area">
+               <div class="row">
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> Date From </label>
+                     <input name="from" type="text" class="form-control" placeholder="DD-MM-YYYY" id="from" autocomplete="off" value="<?=$this->input->get('from')?>">
+                  </div>
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> Date To </label>
+                     <input name="to" type="text" class="form-control" placeholder="DD-MM-YYYY" id="to" autocomplete="off" value="<?=$this->input->get('to')?>">
+                  </div>
+                  <div class="col-md-4 col-lg-4 col-12">
+                     <label for=""> &nbsp; </label>
+                     <input class="form-control apply-filter w-100 ap_bg" id="rc" value="Submit" type="submit">
+                  </div>
+               </div>
+            </div>
+            
+         </div>
+      </section>
+    </form>
+
+  
+
+      <div class="report-area">
+         <div class="report-area-t">
+            <div class="row">
+               <div class="col-lg-12 col-md-12 col-12 ">
+                  <div class="top-10-txt">
+                     <h2 class=" report-heading"> List </h2>
+                  </div>
+               </div>
+               <div class="border-tabl"></div>
+               <div class="col-lg-12 col-md-12 col-12 ">
+                  <div class="report-table">
+                    <table id="example1" class="table table-striped" >
+                        <thead>
+                           <tr style="background: transparent">
+                              <th> Sr.No. / Complaint Id</th>
+                              <th> User Id</th>
+                              <th> Complaint Msg. </th>
+                              <th> Complaint Date/Time </th>
+                              <th> Reply </th>
+                              <th> Replied Date/Time </th>
+                              <th> Attachments </th>
+                              <th> Status </th>
+                              <th> Action </th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <?php if(!is_null($rows) && !empty($rows) ){
+                              $i = 1;
+                              foreach($rows as $row):?>
+                           <tr>
+                              <td>
+                                 <p> <?=$i;?> / <?=$row['id'];?></p>
+                              </td>
+                              <td>
+                                 <p> <?=$row['user_id'];?></p>
+                              </td>
+                              <td>
+                                 <p style="max-width: 250px"> <?=$row['complaint_message'];?> </p>
+                              </td>
+                              <td>
+                                 <p><?=date("d-M-Y <\b\\r>h:i A", strtotime($row['created']))?></p>
+                              </td>
+                              <td>
+                                 <p style="max-width: 250px"><?=$row['reply_message']!=""?$row['reply_message']:"-"?></a></p>
+                              </td>
+                              <td>
+                                 <p><?=$row["reply_on"]!="0000-00-00 00:00:00"?date("d-M-Y <\b\\r>h:i A", strtotime($row["reply_on"])):"-"?></a></p>
+                              </td>
+                              <td>
+                                 <p>
+                                    <?php $i=1; foreach($row['files'] as $doc): ?>
+                                       <a href="<?=base_url('uploads/').$doc['file']?>">Doc <?=$i?></a><br/>
+                                    <?php $i++; endforeach ?>
+                                 </p>
+                              </td>
+                              <td>
+                                 <span style="color: <?=$row['status']=='Pending'?'blue':''?><?=$row['status']=='Solved'?'green':''?><?=$row['status']=='Rejected'?'red':''?>"><?=$row['status']?></span>
+                              </td>
+                              <td>
+                                 <?php if(!$row["is_closed"]): ?>
+                                 <a onclick="return confirm('Are you sure you want to delete this item?');" href="<?=base_url('complaints?closeId='.$row['id'])?>">
+                                        <button class=" del-bank-btn hvr-rectangle-out">Close</button></a>
+                                  <?php endif ?>
+                              </td>
+                           </tr>
+                           <?php $i++; endforeach; } ?>       
+                        </tbody>
+                        <tfoot>
+                           <tr style="display: none;">
+                              <th> Sr.No. / Complaint Id</th>
+                              <th> User Id</th>
+                              <th> Complaint Msg. </th>
+                              <th> Complaint Date/Time </th>
+                              <th> Reply </th>
+                              <th> Replied Date/Time </th>
+                              <th> Attachments </th>
+                              <th> Status </th>
+                              <th> Action </th>
+                           </tr>
+                        </tfoot>
+                     </table>
+                  </div>
+                  
+               </div>
+            </div>
+         </div>
+      </div>
+      <br>
+      <br>
+   </div>
+</div>
+</div></div></div></div>
+<?php $this->load->view('includes/footer');?>
+<?php $this->load->view('includes/alljs');?>
+<?php $this->load->view('includes/dataTable');?> 
+<?php $this->load->view('includes/common_session_popup');?>
+<?php ;?>
+<script type="text/javascript">
+   $(function(){
+       $("input[type='submit']").click(function(){
+           var $fileUpload = $("input[type='file']");
+           if (parseInt($fileUpload.get(0).files.length)>2){
+            alert("You can only upload a maximum of 2 files");
+           }
+       });    
+   });​
+</script>
+

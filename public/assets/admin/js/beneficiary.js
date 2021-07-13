@@ -212,22 +212,27 @@ $(document).ready(function() {
             toastr.error(res.message, 'Error');
         }
     });
-    // $('.add-beneficiary-form .verification-btn').on('click', function() {
-    //     $(this).text('Verifying...');
-    //     var form = $('.add-beneficiary-form');
-    //     var data = form.serializeArray().filter(function(item) {
-    //         return item.name != '_method';
-    //     });
-    //     $.post(`${BASE_URL}/admin/dmt/ben-verification`, data, function(res) {
-    //         $(this).text('Verify');
-    //         if (res.status == 'success') {
-    //             $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
-    //             toastr.success(res.message, 'Success');
-    //         } else {
-    //             toastr.error(res.message, 'Error');
-    //         }
-    //     });
-    // });
+    $('.add-beneficiary-form .verification-btn').on('click', function() {
+        var button = $(this);
+        button.text('Verifying...');
+        var data = {
+            'benif_id': $('.transfer-fund-form input[name="beneId"]').val(),
+            'bank_name': $('.add-beneficiary-form input[name="bank_name"]').val(),
+            'accountno': $('.add-beneficiary-form input[name="account_number"]').val(),
+            'ifsc_code': $('.add-beneficiary-form input[name="ifsc_code"]').val()
+        };
+        $.post(`https://mydigicash.in/ag/Kyc_nonkyc_users/accountdetails`, data, function(res) {
+            button.text('Verify');
+            console.log(res);
+            // if (res.status == 'success') {
+            //     $('.add-beneficiary-form input[name="status"]').val(1);
+            //     $('.add-beneficiary-form input[name="beneficiary_name"]').val(res.data.beneName);
+            //     toastr.success(res.message, 'Success');
+            // } else {
+            //     toastr.error(res.message, 'Error');
+            // }
+        });
+    });
     // $('.transfer-fund-form .verification-btn').on('click', function() {
     //     $(this).text('Verifying...');
     //     var form = $('.transfer-fund-form');
